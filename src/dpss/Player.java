@@ -2,6 +2,7 @@ package dpss;
 
 public class Player {
 	private String fName, lName, uName, password, ipAddress;
+	private boolean status;
 	private int age;
 	
 	public Player(String fName, String lName, String uName, String password, String ipAddress, int age) {
@@ -11,6 +12,7 @@ public class Player {
 		this.password = password;
 		this.ipAddress = ipAddress;
 		this.age = age;
+		this.status = false;
 	}
 	
 	public String getfName() {
@@ -48,5 +50,11 @@ public class Player {
 	}
 	public void setAge(int age) {
 		this.age = age;
+	}
+	public boolean getStatus() {
+		return status;
+	}
+	public void setStatus(boolean status) {
+		this.status = status;
 	}
 }
