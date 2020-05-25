@@ -31,7 +31,7 @@ public class Player {
 		return uName;
 	}
 	public void setuName(String uName) throws BadUserNameException {
-		if(uName.length() >= 6 && uName.length() <=15) {
+		if(uName.equals("Admin") || (uName.length() >= 6 && uName.length() <=15)) {
 			this.uName = uName;
 		} else {
 			throw new BadUserNameException();
@@ -41,7 +41,7 @@ public class Player {
 		return password;
 	}
 	public void setPassword(String passWord) throws BadPasswordException {
-		if(passWord.length() >= 6) {
+		if(passWord.equals("Admin") || (passWord.length() >= 6)) {
 			this.password = passWord;
 		} else {
 			throw new BadPasswordException();

@@ -24,8 +24,21 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 	protected CoreGameServer(String location) throws RemoteException {
 		super();
 		this.gameServerLocation = location; 
+		createPlayerAccount("Admin","Admin","Admin","Admin", getRegionDefaultIP(), 0);
 	}
 	
+	private String getRegionDefaultIP() {
+		switch(this.gameServerLocation) {
+			case "NA":
+				return "132.168.2.22";
+			case "EU":
+				return "93.168.2.22";
+			case "AS":
+				return "182.168.2.22";
+		}
+		return null;
+	}
+
 	private void serverLog(String logStatement, String ipAddress) {
 		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
 		 LocalDateTime tStamp = LocalDateTime.now(); 
