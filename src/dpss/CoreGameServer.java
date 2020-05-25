@@ -1,7 +1,13 @@
 package dpss;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
@@ -13,11 +19,33 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 	
 	private HashMap<Character,ArrayList<Player>> playerHash = new HashMap<>();
 
-	protected CoreGameServer() throws RemoteException {
+	private String gameServerLocation;
+
+	protected CoreGameServer(String location) throws RemoteException {
 		super();
+		this.gameServerLocation = location; 
+	}
+	
+	private void serverLog(String logStatement, String ipAddress) {
+		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
+		 LocalDateTime tStamp = LocalDateTime.now(); 
+		 String writeString = String.format("[%s] Response to %s -- %s", dtf.format(tStamp), ipAddress, logStatement);
+		 try{
+			File file = new File(String.format("server_logs/%s-server.log", this.gameServerLocation));
+			file.getParentFile().mkdirs();
+			FileWriter fw = new FileWriter(file, true);
+			BufferedWriter logger = new BufferedWriter(fw);
+			logger.write(writeString);
+			logger.newLine();
+			logger.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public synchronized String createPlayerAccount(String fName, String lName, String uName, String password, String ipAddress, int age) {
+		serverLog("Initiating CREATEACCOUNT for player", ipAddress);
+		
 		Character uNameFirstChar = uName.charAt(0);
 		uNameFirstChar = Character.toLowerCase(uNameFirstChar);
 		String retString;
@@ -39,15 +67,19 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 			retString = String.format("Successfully created account for player with username -- '%s'", uName);
 		}
 		
+		serverLog(retString, ipAddress);
 		return retString; 
 	}
 	
 	public synchronized String playerSignIn(String uName, String password, String ipAddress) {
+		serverLog("Initiating SIGNIN for player", ipAddress);
 		Character uNameFirstChar = uName.charAt(0);
 		uNameFirstChar = Character.toLowerCase(uNameFirstChar);
 		
 		if(!this.playerHash.containsKey(uNameFirstChar)) {
-			return String.format("Player with username '%s' does not exist", uName);
+			String errExist = String.format("Player with username '%s' does not exist", uName);
+			serverLog(errExist, ipAddress);
+			return errExist;
 		}
 		
 		Optional<Player> playerToSignIn = this.playerHash.get(uNameFirstChar).stream().filter(player -> {
@@ -56,22 +88,30 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		
 		if(playerToSignIn.isPresent()) {
 			if(playerToSignIn.get().getStatus()) {
-				return String.format("Player '%s' is already signed in", uName);
+				String errSignedIn = String.format("Player '%s' is already signed in", uName); 
+				serverLog(errSignedIn, ipAddress);
+				return errSignedIn;
 			} else {
 				playerToSignIn.get().setStatus(true);
 			}
-			return String.format("Successfully signed in player with username -- '%s'",uName);
+			String success = String.format("Successfully signed in player with username -- '%s'",uName);
+			serverLog(success, ipAddress);
+			return success;
 		}
-		
-		return String.format("Player with username '%s' does not exist", uName);
+		String errExist = String.format("Player with username '%s' does not exist", uName);
+		serverLog(errExist, ipAddress);
+		return errExist;
 	}
 	
 	public synchronized String playerSignOut(String uName, String ipAddress) {
+		serverLog("Initiating SIGNOUT for player", ipAddress);
 		Character uNameFirstChar = uName.charAt(0);
 		uNameFirstChar = Character.toLowerCase(uNameFirstChar);
 		
 		if(!this.playerHash.containsKey(uNameFirstChar)) {
-			return String.format("Player with username '%s' does not exist", uName);
+			String errExist = String.format("Player with username '%s' does not exist", uName);
+			serverLog(errExist, ipAddress);
+			return errExist;
 		}
 		
 		Optional<Player> playerToSignOut = this.playerHash.get(uNameFirstChar).stream().filter(player -> {
@@ -80,14 +120,20 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		
 		if(playerToSignOut.isPresent()) {
 			if(!playerToSignOut.get().getStatus()) {
-				return String.format("Player '%s' is already signed out", uName);
+				String errSignedOut = String.format("Player '%s' is already signed out", uName);
+				serverLog(errSignedOut, ipAddress);
+				return errSignedOut;
 			} else {
 				playerToSignOut.get().setStatus(false);
 			}
-			return String.format("Successfully signed out player with username -- '%s'",uName);
+			String success = String.format("Successfully signed out player with username -- '%s'",uName);
+			serverLog(success, ipAddress);
+			return success;
 		}
 		
-		return String.format("Player with username '%s' does not exist", uName);
+		String errExist = String.format("Player with username '%s' does not exist", uName);
+		serverLog(errExist, ipAddress);
+		return errExist;
 	}
 
 }

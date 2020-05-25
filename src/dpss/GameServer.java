@@ -12,9 +12,9 @@ public class GameServer {
 	
 	public static void main(String[] args) {
         try {
-        	GameServerRMI gameServerNA = new CoreGameServer();
-        	GameServerRMI gameServerEU = new CoreGameServer();
-        	GameServerRMI gameServerAS = new CoreGameServer();
+        	GameServerRMI gameServerNA = new CoreGameServer("NA");
+        	GameServerRMI gameServerEU = new CoreGameServer("EU");
+        	GameServerRMI gameServerAS = new CoreGameServer("AS");
         	ServerDiscovererRMI discoverer = new ServerDiscoverer();
 			Registry reg = LocateRegistry.createRegistry(1098);
 			reg.rebind("Discover", discoverer);
