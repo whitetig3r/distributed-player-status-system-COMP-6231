@@ -1,9 +1,15 @@
 package dpss;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class PlayersClient {
@@ -13,10 +19,13 @@ public class PlayersClient {
 	private static GameServerRMI serverStub;
 	private static ServerDiscovererRMI discoveryStub;
 	
+	private static final String ERR_BAD_IP = "The Server IP Address is invalid!";
+	
 	
 
 	public static void main(String[] args) {
 		try {
+			System.out.println("NOTE -- Player Logs available at " + System.getProperty("user.dir") + "/player_logs");
 			createPlayerAccount();
 			playerSignIn();
 			playerSignOut();
@@ -25,17 +34,39 @@ public class PlayersClient {
 		}
 	}
 	
+	private static void log(String logStatement, String uName, String ipAddress) {
+		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
+		 LocalDateTime tStamp = LocalDateTime.now(); 
+		 String writeString = String.format("[%s] %s @ (%s) -- %s", dtf.format(tStamp), uName, ipAddress, logStatement);
+		 try{
+			File file = new File(String.format("player_logs/%s.log", uName));
+			file.getParentFile().mkdirs();
+			FileWriter fw = new FileWriter(file, true);
+			BufferedWriter logger = new BufferedWriter(fw);
+			logger.write(writeString);
+			logger.newLine();
+			logger.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private static void realizeCreatePlayerAccount(String fName, String lName, String uName, String password, int age, String ipAddress) throws MalformedURLException, RemoteException, NotBoundException {
 		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
 		serverToConnect = discoveryStub.getRegionServer(ipAddress);
 		
-		System.out.println("Performing Create Player Account Action on Region Server -- " + serverToConnect);
+		String logStatement = "Requesting Create Player Account Action on Region Server -- " + serverToConnect;
+		System.out.println(logStatement);
 		
 		if(serverToConnect != null) {
 			serverStub = (GameServerRMI) Naming.lookup("rmi://127.0.0.1:1098" + serverToConnect);
-			System.out.println(serverStub.createPlayerAccount(fName, lName, uName, password, ipAddress, age));
+			String retStatement = serverStub.createPlayerAccount(fName, lName, uName, password, ipAddress, age);
+			System.out.println(retStatement);
+			log(logStatement, uName, ipAddress);
+			log(retStatement, uName, ipAddress);
 		} else {
-			System.out.println("Bad IP Address!");
+			System.out.println(ERR_BAD_IP);
+			log(ERR_BAD_IP, uName, "BAD_IP_ADDR");
 		}
 	}
 	
@@ -43,13 +74,18 @@ public class PlayersClient {
 		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
 		serverToConnect = discoveryStub.getRegionServer(ipAddress);
 		
-		System.out.println("Performing Sign-In Action on Region Server -- " + serverToConnect);
+		String logStatement = "Requesting Sign-In Action on Region Server -- " + serverToConnect;
+		System.out.println(logStatement);
 		
 		if(serverToConnect != null) {
 			serverStub = (GameServerRMI) Naming.lookup("rmi://127.0.0.1:1098" + serverToConnect);
-			System.out.println(serverStub.playerSignIn(uName, password, ipAddress));
+			String retStatement = serverStub.playerSignIn(uName, password, ipAddress);
+			System.out.println(retStatement);
+			log(logStatement, uName, ipAddress);
+			log(retStatement, uName, ipAddress);
 		} else {
-			System.out.println("Bad IP Address!");
+			System.out.println(ERR_BAD_IP);
+			log(ERR_BAD_IP, uName, "BAD_IP_ADDR");
 		}
 	}
 
@@ -57,13 +93,18 @@ public class PlayersClient {
 		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
 		serverToConnect = discoveryStub.getRegionServer(ipAddress);
 		
-		System.out.println("Performing Sign-Out Action on Region Server -- " + serverToConnect);
+		String logStatement = "Requesting Sign-Out Action on Region Server -- " + serverToConnect;
+		System.out.println(logStatement);
 		
 		if(serverToConnect != null) {
 			serverStub = (GameServerRMI) Naming.lookup("rmi://127.0.0.1:1098" + serverToConnect);
-			System.out.println(serverStub.playerSignOut(uName, ipAddress));
+			String retStatement = serverStub.playerSignOut(uName, ipAddress);
+			System.out.println(retStatement);
+			log(logStatement, uName, ipAddress);
+			log(retStatement, uName, ipAddress);
 		} else {
-			System.out.println("Bad IP Address!");
+			System.out.println(ERR_BAD_IP);
+			log(ERR_BAD_IP, uName, "BAD_IP_ADDR");
 		}
 	}
 
@@ -91,15 +132,9 @@ public class PlayersClient {
 		
 		try {
 			realizeCreatePlayerAccount(fName, lName, uName, password, age, ipAddress);
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
+		} catch (MalformedURLException | RemoteException | NotBoundException e) {
 			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NotBoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log(e.getMessage(), uName, ipAddress);
 		}
 	}
 		
@@ -116,15 +151,9 @@ public class PlayersClient {
 		
 		try {
 			realizePlayerSignIn(uName, password, ipAddress);
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
+		} catch (MalformedURLException | RemoteException | NotBoundException e) {
 			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NotBoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log(e.getMessage(), uName, ipAddress);
 		}
 
 	}
@@ -139,15 +168,10 @@ public class PlayersClient {
 		
 		try {
 			realizePlayerSignOut(uName, ipAddress);
-		} catch (MalformedURLException e) {
+		} catch (MalformedURLException | RemoteException | NotBoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NotBoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log(e.getMessage(), uName, ipAddress);
 		}
 
 	}

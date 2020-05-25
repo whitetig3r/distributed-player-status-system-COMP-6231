@@ -5,14 +5,14 @@ public class Player {
 	private boolean status;
 	private int age;
 	
-	public Player(String fName, String lName, String uName, String password, String ipAddress, int age) {
-		this.fName = fName;
-		this.lName = lName;
-		this.uName = uName;
-		this.password = password;
-		this.ipAddress = ipAddress;
-		this.age = age;
-		this.status = false;
+	public Player(String fName, String lName, String uName, String password, String ipAddress, int age) throws BadUserNameException, BadPasswordException {
+		this.setfName(fName);
+		this.setlName(lName);
+		this.setuName(uName);
+		this.setPassword(password);
+		this.setIpAddress(ipAddress);
+		this.setAge(age);
+		this.setStatus(false);
 	}
 	
 	public String getfName() {
@@ -30,14 +30,22 @@ public class Player {
 	public String getuName() {
 		return uName;
 	}
-	public void setuName(String uName) {
-		this.uName = uName;
+	public void setuName(String uName) throws BadUserNameException {
+		if(uName.length() >= 6 && uName.length() <=15) {
+			this.uName = uName;
+		} else {
+			throw new BadUserNameException();
+		}
 	}
 	public String getPassword() {
 		return password;
 	}
-	public void setPassword(String passWord) {
-		this.password = passWord;
+	public void setPassword(String passWord) throws BadPasswordException {
+		if(passWord.length() >= 6) {
+			this.password = passWord;
+		} else {
+			throw new BadPasswordException();
+		}
 	}
 	public String getIpAddress() {
 		return ipAddress;

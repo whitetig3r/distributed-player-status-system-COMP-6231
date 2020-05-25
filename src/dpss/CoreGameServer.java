@@ -47,34 +47,37 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		serverLog("Initiating CREATEACCOUNT for player", ipAddress);
 		
 		Character uNameFirstChar = uName.charAt(0);
-		uNameFirstChar = Character.toLowerCase(uNameFirstChar);
-		String retString;
+		String retString = "An Error was encountered!";
 		
 		if(!this.playerHash.containsKey(uNameFirstChar)) {
 			this.playerHash.put(uNameFirstChar, new ArrayList<Player>());
 		}
 		
-		Player playerToAdd = new Player(fName, lName, uName, password, ipAddress, age);
-		
-		Optional<Player> playerExists = this.playerHash.get(uNameFirstChar)
-				.stream().filter(player -> player.getuName().equals(uName)).findAny();
-		
-		if(playerExists.isPresent()) {
-			retString = "Player with that username already exists!";
-		} else {
-			this.playerHash.get(uNameFirstChar).add(playerToAdd);
-			// retString = this.playerHash.get(uNameFirstChar).stream().map(Player::getfName).collect(Collectors.joining("\n"));
-			retString = String.format("Successfully created account for player with username -- '%s'", uName);
+		try {
+			Player playerToAdd = new Player(fName, lName, uName, password, ipAddress, age);
+			
+			Optional<Player> playerExists = this.playerHash.get(uNameFirstChar)
+					.stream().filter(player -> player.getuName().equals(uName)).findAny();
+			
+			if(playerExists.isPresent()) {
+				retString = "Player with that username already exists!";
+			} else {
+				this.playerHash.get(uNameFirstChar).add(playerToAdd);
+				// retString = this.playerHash.get(uNameFirstChar).stream().map(Player::getfName).collect(Collectors.joining("\n"));
+				retString = String.format("Successfully created account for player with username -- '%s'", uName);
+			}
+			
+			serverLog(retString, ipAddress);
+		} catch(BadUserNameException | BadPasswordException e) {
+			retString = e.getMessage();
+			serverLog(retString, ipAddress);
 		}
-		
-		serverLog(retString, ipAddress);
 		return retString; 
 	}
 	
 	public synchronized String playerSignIn(String uName, String password, String ipAddress) {
 		serverLog("Initiating SIGNIN for player", ipAddress);
 		Character uNameFirstChar = uName.charAt(0);
-		uNameFirstChar = Character.toLowerCase(uNameFirstChar);
 		
 		if(!this.playerHash.containsKey(uNameFirstChar)) {
 			String errExist = String.format("Player with username '%s' does not exist", uName);
@@ -98,7 +101,7 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 			serverLog(success, ipAddress);
 			return success;
 		}
-		String errExist = String.format("Player with username '%s' does not exist", uName);
+		String errExist = String.format("Player with username '%s' and that password combination does not exist", uName);
 		serverLog(errExist, ipAddress);
 		return errExist;
 	}
@@ -106,7 +109,6 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 	public synchronized String playerSignOut(String uName, String ipAddress) {
 		serverLog("Initiating SIGNOUT for player", ipAddress);
 		Character uNameFirstChar = uName.charAt(0);
-		uNameFirstChar = Character.toLowerCase(uNameFirstChar);
 		
 		if(!this.playerHash.containsKey(uNameFirstChar)) {
 			String errExist = String.format("Player with username '%s' does not exist", uName);
@@ -131,7 +133,7 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 			return success;
 		}
 		
-		String errExist = String.format("Player with username '%s' does not exist", uName);
+		String errExist = String.format("Player with username '%s' and that password combination does not exist", uName);
 		serverLog(errExist, ipAddress);
 		return errExist;
 	}

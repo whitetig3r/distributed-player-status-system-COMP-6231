@@ -12,6 +12,7 @@ public class GameServer {
 	
 	public static void main(String[] args) {
         try {
+        	System.out.println("NOTE -- " + "Server Logs available at " + System.getProperty("user.dir") + "/server_logs");
         	GameServerRMI gameServerNA = new CoreGameServer("NA");
         	GameServerRMI gameServerEU = new CoreGameServer("EU");
         	GameServerRMI gameServerAS = new CoreGameServer("AS");
