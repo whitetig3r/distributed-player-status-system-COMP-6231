@@ -150,5 +150,57 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		serverLog(errExist, ipAddress);
 		return errExist;
 	}
+	
+	public synchronized String adminSignIn(String uName, String password, String ipAddress) {
+		serverLog("Initiating SIGNIN for admin", ipAddress);
+		Character uNameFirstChar = uName.charAt(0);
+		
+		Optional<Player> playerToSignIn = this.playerHash.get(uNameFirstChar).stream().filter(player -> {
+			return player.getuName().equals(uName) && player.getPassword().equals(password);
+		}).findAny();
+		
+		if(playerToSignIn.isPresent()) {
+			if(playerToSignIn.get().getStatus()) {
+				String errSignedIn = "Admin is already signed in"; 
+				serverLog(errSignedIn, ipAddress);
+				return errSignedIn;
+			} else {
+				playerToSignIn.get().setStatus(true);
+			}
+			String success = "Successfully signed in admin!";
+			serverLog(success, ipAddress);
+			return success;
+		}
+		String errExist = "Admin with that password combination does not exist";
+		serverLog(errExist, ipAddress);
+		return errExist;
+	}
+	
+	public synchronized String adminSignOut(String uName, String ipAddress) {
+		serverLog("Initiating SIGNOUT for admin", ipAddress);
+		Character uNameFirstChar = uName.charAt(0);
+	
+		
+		Optional<Player> playerToSignOut = this.playerHash.get(uNameFirstChar).stream().filter(player -> {
+			return player.getuName().equals(uName);
+		}).findAny();
+		
+		if(playerToSignOut.isPresent()) {
+			if(!playerToSignOut.get().getStatus()) {
+				String errSignedOut = "Admin is already signed out";
+				serverLog(errSignedOut, ipAddress);
+				return errSignedOut;
+			} else {
+				playerToSignOut.get().setStatus(false);
+			}
+			String success = "Successfully signed out admin";
+			serverLog(success, ipAddress);
+			return success;
+		}
+		
+		String errExist = "Admin with that password combination does not exist";
+		serverLog(errExist, ipAddress);
+		return errExist;
+	}
 
 }

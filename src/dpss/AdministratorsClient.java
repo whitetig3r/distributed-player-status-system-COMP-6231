@@ -93,7 +93,7 @@ public class AdministratorsClient {
 		
 		if(serverToConnect != null) {
 			serverStub = (GameServerRMI) Naming.lookup("rmi://127.0.0.1:1098" + serverToConnect);
-			String retStatement = serverStub.playerSignIn(uName, password, ipAddress);
+			String retStatement = serverStub.adminSignIn(uName, password, ipAddress);
 			System.out.println(retStatement);
 			log(logStatement, uName, serverToConnect);
 			log(retStatement, uName, serverToConnect);
@@ -112,7 +112,7 @@ public class AdministratorsClient {
 		
 		if(serverToConnect != null) {
 			serverStub = (GameServerRMI) Naming.lookup("rmi://127.0.0.1:1098" + serverToConnect);
-			String retStatement = serverStub.playerSignOut(uName, ipAddress);
+			String retStatement = serverStub.adminSignOut(uName, ipAddress);
 			System.out.println(retStatement);
 			log(logStatement, uName, serverToConnect);
 			log(retStatement, uName, serverToConnect);
