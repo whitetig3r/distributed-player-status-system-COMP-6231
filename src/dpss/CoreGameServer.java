@@ -4,6 +4,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.time.LocalDateTime;
@@ -201,6 +205,56 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		String errExist = "Admin with that password combination does not exist";
 		serverLog(errExist, ipAddress);
 		return errExist;
+	}
+	
+	public synchronized String getPlayerStatus(String uName, String password, String ipAddress) {
+		if(uName.equals("Admin") && password.equals("Admin")) {
+			DatagramSocket aSocket = null;
+			String reqOp = "getStatus";
+			try {
+				
+				aSocket = new DatagramSocket();    
+				byte [] m = reqOp.getBytes();
+				InetAddress aHost = InetAddress.getByName("127.0.0.1");
+				int serverPort = 6789;		                                                 
+				DatagramPacket request =
+				 	new DatagramPacket(m, reqOp.length(), aHost, serverPort);
+				aSocket.send(request);			                        
+				byte[] buffer = new byte[1000];
+				DatagramPacket reply = new DatagramPacket(buffer, buffer.length);	
+				aSocket.receive(reply);
+				String succ = new String(reply.getData());	
+				serverLog(succ, ipAddress);
+				return succ;
+			} catch (SocketException e){
+				System.out.println("Socket: " + e.getMessage());
+			} catch (IOException e) {
+				System.out.println("IO: " + e.getMessage());
+			} finally {
+				if(aSocket != null) aSocket.close();
+			}
+		}
+		String retStatement = "Incorrect credentials for Admin!";
+		serverLog(retStatement, ipAddress);
+		return retStatement;
+	}
+	
+	public String getPlayerCounts() {
+		int online = 0;
+		int offline = 0;
+		for(Character index : this.playerHash.keySet()) {
+			for(Player player : this.playerHash.get(index)) {
+				if(player.getfName().equals("Admin")) continue;
+				if(player.getStatus()) {
+					online += 1;
+				} else {
+					offline += 1;
+				}
+			}
+		}
+		String succ = String.format("%s: Online: %d Offline: %d", this.gameServerLocation, online, offline);
+		serverLog(succ, "Admin@"+this.gameServerLocation);
+		return succ;
 	}
 
 }

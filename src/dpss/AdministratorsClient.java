@@ -24,7 +24,7 @@ public class AdministratorsClient {
 	public static void main(String[] args) {
 		System.out.println("NOTE -- Admin Logs available at " + System.getProperty("user.dir") + "/admin_logs");
 		adminSignIn();
-		// some actions
+		getPlayerStatus();
 		adminSignOut();
 	}
 	
@@ -43,6 +43,39 @@ public class AdministratorsClient {
 			logger.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+	
+	private static void getPlayerStatus(){
+		String uName;
+		String password;
+		String ipAddress;
+		System.out.println("Enter User Name:");
+		uName = sc.nextLine();
+		System.out.println("Enter Password:");
+		password = sc.nextLine();
+		System.out.println("Enter IP Address:");
+		ipAddress = sc.nextLine();
+		try {
+			discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
+			serverToConnect = discoveryStub.getRegionServer(ipAddress);
+			
+			String logStatement = "Requesting getPlayerStatus Action on Region Server -- " + serverToConnect;
+			System.out.println(logStatement);
+			
+			if(serverToConnect != null) {
+				serverStub = (GameServerRMI) Naming.lookup("rmi://127.0.0.1:1098" + serverToConnect);
+				String retStatement = serverStub.getPlayerStatus(uName, password, ipAddress);
+				System.out.println(retStatement);
+				log(logStatement, uName, serverToConnect);
+				log(retStatement, uName, serverToConnect);
+			} else {
+				System.out.println(ERR_BAD_IP);
+				log(ERR_BAD_IP, uName, "BAD_IP_ADDR");
+			}
+		} catch (MalformedURLException | RemoteException | NotBoundException e) {
+				e.printStackTrace();
+				log(e.getMessage(), uName, ipAddress);
 		}
 	}
 	

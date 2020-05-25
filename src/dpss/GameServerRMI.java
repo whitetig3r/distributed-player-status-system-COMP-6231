@@ -9,4 +9,5 @@ public interface GameServerRMI extends Remote {
 	public abstract String playerSignOut(String uName, String ipAddress) throws RemoteException;
 	public abstract String adminSignIn(String uName, String password, String ipAddress) throws RemoteException;
 	public abstract String adminSignOut(String uName, String ipAddress) throws RemoteException;
+	public abstract String getPlayerStatus(String uName, String password, String ipAddress) throws RemoteException;
 }
