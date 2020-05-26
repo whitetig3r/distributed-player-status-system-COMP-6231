@@ -1,4 +1,4 @@
-package dpss;
+package exceptions;
 
 public class BadPasswordException extends Exception {
 

@@ -1,4 +1,7 @@
-package dpss;
+package models;
+
+import exceptions.BadPasswordException;
+import exceptions.BadUserNameException;
 
 public class Player {
 	private String fName, lName, uName, password, ipAddress;

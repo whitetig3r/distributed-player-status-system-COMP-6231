@@ -1,4 +1,4 @@
-package dpss;
+package server;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

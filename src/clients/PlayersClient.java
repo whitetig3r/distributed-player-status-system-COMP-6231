@@ -1,4 +1,4 @@
-package dpss;
+package clients;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
+import server.GameServerRMI;
+import server.ServerDiscovererRMI;
+
 public class PlayersClient {
 
 	private static Scanner sc = new Scanner(System.in);
@@ -20,8 +23,6 @@ public class PlayersClient {
 	private static ServerDiscovererRMI discoveryStub;
 	
 	private static final String ERR_BAD_IP = "The Server IP Address is invalid!";
-	
-	
 
 	public static void main(String[] args) {
 		try {
@@ -31,23 +32,6 @@ public class PlayersClient {
 			playerSignOut();
 		} catch (Exception e) {
 			System.out.println(e);
-		}
-	}
-	
-	private static void log(String logStatement, String uName, String ipAddress) {
-		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
-		 LocalDateTime tStamp = LocalDateTime.now(); 
-		 String writeString = String.format("[%s] %s @ (%s) -- %s", dtf.format(tStamp), uName, ipAddress, logStatement);
-		 try{
-			File file = new File(String.format("player_logs/%s.log", uName));
-			file.getParentFile().mkdirs();
-			FileWriter fw = new FileWriter(file, true);
-			BufferedWriter logger = new BufferedWriter(fw);
-			logger.write(writeString);
-			logger.newLine();
-			logger.close();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 	
@@ -142,6 +126,7 @@ public class PlayersClient {
 		String uName;
 		String password;
 		String ipAddress;
+		
 		System.out.println("Enter User Name:");
 		uName = sc.nextLine();
 		System.out.println("Enter Password:");
@@ -161,6 +146,7 @@ public class PlayersClient {
 	private static void playerSignOut() {
 		String uName;
 		String ipAddress;
+		
 		System.out.println("Enter User Name:");
 		uName = sc.nextLine();
 		System.out.println("Enter IP Address:");
@@ -169,11 +155,27 @@ public class PlayersClient {
 		try {
 			realizePlayerSignOut(uName, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			log(e.getMessage(), uName, ipAddress);
 		}
 
+	}
+	
+	private static void log(String logStatement, String uName, String ipAddress) {
+		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
+		 LocalDateTime tStamp = LocalDateTime.now(); 
+		 String writeString = String.format("[%s] %s @ (%s) -- %s", dtf.format(tStamp), uName, ipAddress, logStatement);
+		 try{
+			File file = new File(String.format("player_logs/%s.log", uName));
+			file.getParentFile().mkdirs();
+			FileWriter fw = new FileWriter(file, true);
+			BufferedWriter logger = new BufferedWriter(fw);
+			logger.write(writeString);
+			logger.newLine();
+			logger.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

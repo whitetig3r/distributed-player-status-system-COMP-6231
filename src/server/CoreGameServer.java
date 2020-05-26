@@ -1,4 +1,4 @@
-package dpss;
+package server;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,52 +13,40 @@ import java.rmi.server.UnicastRemoteObject;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
-//import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import exceptions.BadPasswordException;
+import exceptions.BadUserNameException;
+import exceptions.UnknownServerRegionException;
+import models.Player;
 
 public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI {
 
 	private static final long serialVersionUID = -3393990750400755075L;
+	private final ArrayList<Integer> EXT_UDP_PORTS = new ArrayList<>(Arrays.asList(6789,6790,6791));
+	private int INT_UDP_PORT;
 	
 	private HashMap<Character,ArrayList<Player>> playerHash = new HashMap<>();
 
 	private String gameServerLocation;
 
-	protected CoreGameServer(String location) throws RemoteException {
+	protected CoreGameServer(String location) throws RemoteException, UnknownServerRegionException {
 		super();
 		this.gameServerLocation = location; 
+		// create a region administrator account
 		createPlayerAccount("Admin","Admin","Admin","Admin", getRegionDefaultIP(), 0);
+		setExternalPorts();
+		runRegionUdpServer();
 	}
 	
-	private String getRegionDefaultIP() {
-		switch(this.gameServerLocation) {
-			case "NA":
-				return "132.168.2.22";
-			case "EU":
-				return "93.168.2.22";
-			case "AS":
-				return "182.168.2.22";
-		}
-		return null;
-	}
-
-	private void serverLog(String logStatement, String ipAddress) {
-		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
-		 LocalDateTime tStamp = LocalDateTime.now(); 
-		 String writeString = String.format("[%s] Response to %s -- %s", dtf.format(tStamp), ipAddress, logStatement);
-		 try{
-			File file = new File(String.format("server_logs/%s-server.log", this.gameServerLocation));
-			file.getParentFile().mkdirs();
-			FileWriter fw = new FileWriter(file, true);
-			BufferedWriter logger = new BufferedWriter(fw);
-			logger.write(writeString);
-			logger.newLine();
-			logger.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+	// CORE PLAYER FUNCTIONALITY
 	
 	public synchronized String createPlayerAccount(String fName, String lName, String uName, String password, String ipAddress, int age) {
 		serverLog("Initiating CREATEACCOUNT for player", ipAddress);
@@ -80,7 +68,6 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 				retString = "Player with that username already exists!";
 			} else {
 				this.playerHash.get(uNameFirstChar).add(playerToAdd);
-				// retString = this.playerHash.get(uNameFirstChar).stream().map(Player::getfName).collect(Collectors.joining("\n"));
 				retString = String.format("Successfully created account for player with username -- '%s'", uName);
 			}
 			
@@ -155,6 +142,10 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		return errExist;
 	}
 	
+	// END OF CORE PLAYER FUNCTIONALITY
+	
+	// CORE ADMIN FUNCTIONALITY
+	
 	public synchronized String adminSignIn(String uName, String password, String ipAddress) {
 		serverLog("Initiating SIGNIN for admin", ipAddress);
 		Character uNameFirstChar = uName.charAt(0);
@@ -207,39 +198,54 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		return errExist;
 	}
 	
-	public synchronized String getPlayerStatus(String uName, String password, String ipAddress) {
+	public String getPlayerStatus(String uName, String password, String ipAddress) {
 		if(uName.equals("Admin") && password.equals("Admin")) {
-			DatagramSocket aSocket = null;
-			String reqOp = "getStatus";
-			try {
-				
-				aSocket = new DatagramSocket();    
-				byte [] m = reqOp.getBytes();
-				InetAddress aHost = InetAddress.getByName("127.0.0.1");
-				int serverPort = 6789;		                                                 
-				DatagramPacket request =
-				 	new DatagramPacket(m, reqOp.length(), aHost, serverPort);
-				aSocket.send(request);			                        
-				byte[] buffer = new byte[1000];
-				DatagramPacket reply = new DatagramPacket(buffer, buffer.length);	
-				aSocket.receive(reply);
-				String succ = new String(reply.getData());	
-				serverLog(succ, ipAddress);
-				return succ;
-			} catch (SocketException e){
-				System.out.println("Socket: " + e.getMessage());
-			} catch (IOException e) {
-				System.out.println("IO: " + e.getMessage());
-			} finally {
-				if(aSocket != null) aSocket.close();
-			}
+			String ret = retrievePlayerStatuses(ipAddress);
+			serverLog(ret, ipAddress);
+			return ret;
 		}
 		String retStatement = "Incorrect credentials for Admin!";
 		serverLog(retStatement, ipAddress);
 		return retStatement;
 	}
 	
-	public String getPlayerCounts() {
+	// END OF CORE ADMIN FUNCTIONALITY
+	
+	// UTILITIES AND HELPERS
+	
+	private String retrievePlayerStatuses(String ipAddress) {
+	    CompletableFuture<String> intRetrieve = CompletableFuture.supplyAsync(()->{
+			return getPlayerCounts();
+	    });
+
+	    CompletableFuture<String> extRetrieve1 = CompletableFuture.supplyAsync(()->{
+	    	return makeUDPRequestToExternalServer(EXT_UDP_PORTS.get(0));
+	    });
+
+	    CompletableFuture<String> extRetrieve2 = CompletableFuture.supplyAsync(()->{
+	    	return makeUDPRequestToExternalServer(EXT_UDP_PORTS.get(1));
+	    });
+
+	    CompletableFuture<Void> allRetrieve = CompletableFuture.allOf(intRetrieve, extRetrieve1, extRetrieve2); 
+	    
+	    try {
+	        allRetrieve.get();
+	        String retSucc = Stream.of(intRetrieve, extRetrieve1, extRetrieve2)
+	        		.map(CompletableFuture::join)
+	        		.collect(Collectors.joining("\n"));
+	        serverLog(retSucc,ipAddress);
+	        return retSucc;
+	    } catch (Exception e) {
+	    	e.printStackTrace();
+		    String err = e.getMessage();
+		    serverLog(err, ipAddress);
+	    }
+	    String err = "ERROR Could not retrieve player statuses!";
+	    serverLog(err, ipAddress);
+	    return err;
+	}
+	
+	private String getPlayerCounts() {
 		int online = 0;
 		int offline = 0;
 		for(Character index : this.playerHash.keySet()) {
@@ -255,6 +261,123 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		String succ = String.format("%s: Online: %d Offline: %d", this.gameServerLocation, online, offline);
 		serverLog(succ, "Admin@"+this.gameServerLocation);
 		return succ;
+	}
+	
+	// NETWORK UTILS 
+	
+	private void runRegionUdpServer() {
+		ExecutorService executorService = Executors.newSingleThreadExecutor();
+		
+    	executorService.execute((Runnable) ()->{
+    	  String log = String.format("Starting UDP Server for %s region on port %d ...",gameServerLocation, INT_UDP_PORT);
+		  System.out.println(log);
+		  serverLog("Admin",log);
+		  listenForPlayerStatusRequests();
+		});
+		
+	}
+	
+	private void listenForPlayerStatusRequests() {
+		// UDP server awaiting requests from other game servers
+		DatagramSocket aSocket = null;
+		try{
+	    	aSocket = new DatagramSocket(INT_UDP_PORT);
+			byte[] buffer = new byte[1000];
+ 			while(true){
+ 				DatagramPacket request = new DatagramPacket(buffer, buffer.length);
+  				aSocket.receive(request);     
+  				String toSend = this.getPlayerCounts();
+    			DatagramPacket reply = new DatagramPacket(toSend.getBytes(), toSend.getBytes().length, request.getAddress(), request.getPort());
+    			aSocket.send(reply);
+    		}
+		} catch (SocketException e){
+		 	System.out.println("Socket: " + e.getMessage());
+		} catch (IOException e) {
+			System.out.println("IO: " + e.getMessage());
+		} finally {
+			if(aSocket != null) aSocket.close();
+		}
+	}
+	
+	private String makeUDPRequestToExternalServer(int serverPort) {
+		DatagramSocket aSocket = null;
+		String reqOp = "getStatus";
+		try {
+			aSocket = new DatagramSocket();    
+			byte [] m = reqOp.getBytes();
+			InetAddress aHost = InetAddress.getByName("127.0.0.1");		                                                 
+			DatagramPacket request =
+			 	new DatagramPacket(m, reqOp.length(), aHost, serverPort);
+			aSocket.send(request);			                        
+			byte[] buffer = new byte[1000];
+			DatagramPacket reply = new DatagramPacket(buffer, buffer.length);	
+			aSocket.receive(reply);
+			String succ = new String(reply.getData());	
+			serverLog(succ, "Admin");
+			return succ;
+		} catch (SocketException e){
+			System.out.println("Socket: " + e.getMessage());
+		} catch (IOException e) {
+			System.out.println("IO: " + e.getMessage());
+		} finally {
+			if(aSocket != null) aSocket.close();
+		}
+		return "ERROR Retrieving player statuses from other servers!";
+	}
+	
+	// END OF NETWORK UTILS
+	
+	private void setExternalPorts() throws UnknownServerRegionException {
+		switch(this.gameServerLocation) {
+			case "NA": {
+				INT_UDP_PORT = Integer.valueOf(EXT_UDP_PORTS.get(0));
+				EXT_UDP_PORTS.remove(0);
+				break;
+			}
+			case "EU": {
+				INT_UDP_PORT = Integer.valueOf(EXT_UDP_PORTS.get(1));
+				EXT_UDP_PORTS.remove(1);
+				break;
+			}
+			case "AS": {
+				INT_UDP_PORT = Integer.valueOf(EXT_UDP_PORTS.get(2));
+				EXT_UDP_PORTS.remove(2);
+				break;
+			}
+			default:
+				throw new UnknownServerRegionException();
+		}
+	}
+
+	private String getRegionDefaultIP() throws UnknownServerRegionException {
+		switch(gameServerLocation) {
+			case "NA":
+				return "132.168.2.22";
+			case "EU":
+				return "93.168.2.22";
+			case "AS":
+				return "182.168.2.22";
+			default:
+				throw new UnknownServerRegionException();
+		}
+	}
+
+	private void serverLog(String logStatement, String ipAddress) {
+		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
+		 LocalDateTime tStamp = LocalDateTime.now(); 
+		 String writeString = String.format("[%s] Response to %s -- %s", dtf.format(tStamp), ipAddress, logStatement);
+		 try{
+			File file = new File(String.format("server_logs/%s-server.log", this.gameServerLocation));
+			file.getParentFile().mkdirs();
+			FileWriter fw = new FileWriter(file, true);
+			BufferedWriter logger = new BufferedWriter(fw);
+			logger.write(writeString);
+			logger.newLine();
+			logger.close();
+		} catch (IOException e) {
+			// can't really log an error while logging
+			e.printStackTrace();
+		}
 	}
 
 }
