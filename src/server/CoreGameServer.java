@@ -125,7 +125,7 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		}).findAny();
 		
 		if(playerToSignOut.isPresent()) {
-			if(!playerToSignOut.get().getStatus()) {
+			if(!(playerToSignOut.get().getStatus())) {
 				String errSignedOut = String.format("Player '%s' is already signed out", uName);
 				serverLog(errSignedOut, ipAddress);
 				return errSignedOut;
@@ -181,7 +181,7 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		}).findAny();
 		
 		if(playerToSignOut.isPresent()) {
-			if(!playerToSignOut.get().getStatus()) {
+			if(!(playerToSignOut.get().getStatus())) {
 				String errSignedOut = "Admin is already signed out";
 				serverLog(errSignedOut, ipAddress);
 				return errSignedOut;
@@ -362,7 +362,7 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		}
 	}
 
-	private void serverLog(String logStatement, String ipAddress) {
+	private synchronized void serverLog(String logStatement, String ipAddress) {
 		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
 		 LocalDateTime tStamp = LocalDateTime.now(); 
 		 String writeString = String.format("[%s] Response to %s -- %s", dtf.format(tStamp), ipAddress, logStatement);

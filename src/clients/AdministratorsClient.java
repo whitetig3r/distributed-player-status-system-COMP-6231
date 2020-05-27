@@ -94,7 +94,7 @@ public class AdministratorsClient {
 		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
 		serverToConnect = discoveryStub.getRegionServer(ipAddress);
 		
-		String logStatement = "Requesting Sign-In Action on Region Server -- " + serverToConnect;
+		String logStatement = "Requesting Sign-In Action on Region Server -- " + (serverToConnect == null ? "Unrecognized Geo-Region" : serverToConnect);
 		System.out.println(logStatement);
 		
 		if(serverToConnect != null) {
@@ -113,7 +113,7 @@ public class AdministratorsClient {
 		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
 		serverToConnect = discoveryStub.getRegionServer(ipAddress);
 		
-		String logStatement = "Requesting Sign-Out Action on Region Server -- " + serverToConnect;
+		String logStatement = "Requesting Sign-Out Action on Region Server -- " + (serverToConnect == null ? "Unrecognized Geo-Region" : serverToConnect);
 		System.out.println(logStatement);
 		
 		if(serverToConnect != null) {
@@ -132,7 +132,7 @@ public class AdministratorsClient {
 		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
 		serverToConnect = discoveryStub.getRegionServer(ipAddress);
 		
-		String logStatement = "Requesting getPlayerStatus Action on Region Server -- " + serverToConnect;
+		String logStatement = "Requesting getPlayerStatus Action on Region Server -- " + (serverToConnect  == null ? "Unrecognized Geo-Region" : serverToConnect);
 		System.out.println(logStatement);
 		
 		if(serverToConnect != null) {
@@ -148,7 +148,7 @@ public class AdministratorsClient {
 	}
 	
 	
-	private static void log(String logStatement, String uName, String serverToConnect) {
+	private static synchronized void log(String logStatement, String uName, String serverToConnect) {
 		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
 		 LocalDateTime tStamp = LocalDateTime.now(); 
 		 String writeString = String.format("[%s] %s @ (Admin-%s) -- %s", dtf.format(tStamp), uName, serverToConnect.substring(1), logStatement);

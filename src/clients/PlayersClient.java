@@ -39,7 +39,7 @@ public class PlayersClient {
 		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
 		serverToConnect = discoveryStub.getRegionServer(ipAddress);
 		
-		String logStatement = "Requesting Create Player Account Action on Region Server -- " + serverToConnect;
+		String logStatement = "Requesting Create Player Account Action on Region Server -- " + (serverToConnect == null ? "Unrecognized Geo-Region" : serverToConnect);
 		System.out.println(logStatement);
 		
 		if(serverToConnect != null) {
@@ -58,7 +58,7 @@ public class PlayersClient {
 		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
 		serverToConnect = discoveryStub.getRegionServer(ipAddress);
 		
-		String logStatement = "Requesting Sign-In Action on Region Server -- " + serverToConnect;
+		String logStatement = "Requesting Sign-In Action on Region Server -- " + (serverToConnect  == null ? "Unrecognized Geo-Region" : serverToConnect);
 		System.out.println(logStatement);
 		
 		if(serverToConnect != null) {
@@ -77,7 +77,7 @@ public class PlayersClient {
 		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
 		serverToConnect = discoveryStub.getRegionServer(ipAddress);
 		
-		String logStatement = "Requesting Sign-Out Action on Region Server -- " + serverToConnect;
+		String logStatement = "Requesting Sign-Out Action on Region Server -- " + (serverToConnect  == null ? "Unrecognized Geo-Region" : serverToConnect);
 		System.out.println(logStatement);
 		
 		if(serverToConnect != null) {
@@ -161,7 +161,7 @@ public class PlayersClient {
 
 	}
 	
-	private static void log(String logStatement, String uName, String ipAddress) {
+	private static synchronized void log(String logStatement, String uName, String ipAddress) {
 		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
 		 LocalDateTime tStamp = LocalDateTime.now(); 
 		 String writeString = String.format("[%s] %s @ (%s) -- %s", dtf.format(tStamp), uName, ipAddress, logStatement);
