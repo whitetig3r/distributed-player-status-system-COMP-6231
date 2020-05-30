@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.rmi.ConnectException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -13,16 +14,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 import server.GameServerRMI;
-import server.ServerDiscovererRMI;
 
 public class PlayersClient {
 
 	private static Scanner sc = new Scanner(System.in);
-	private static String serverToConnect;
 	private static GameServerRMI serverStub;
-	private static ServerDiscovererRMI discoveryStub;
 	
-	private static final String ERR_BAD_IP = "The Server IP Address is invalid!";
 
 	public static void main(String[] args) {
 		try {
@@ -32,63 +29,6 @@ public class PlayersClient {
 			playerSignOut();
 		} catch (Exception e) {
 			System.out.println(e);
-		}
-	}
-	
-	private static void realizeCreatePlayerAccount(String fName, String lName, String uName, String password, int age, String ipAddress) throws MalformedURLException, RemoteException, NotBoundException {
-		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
-		serverToConnect = discoveryStub.getRegionServer(ipAddress);
-		
-		String logStatement = "Requesting Create Player Account Action on Region Server -- " + (serverToConnect == null ? "Unrecognized Geo-Region" : serverToConnect);
-		System.out.println(logStatement);
-		
-		if(serverToConnect != null) {
-			serverStub = (GameServerRMI) Naming.lookup("rmi://127.0.0.1:1098" + serverToConnect);
-			String retStatement = serverStub.createPlayerAccount(fName, lName, uName, password, ipAddress, age);
-			System.out.println(retStatement);
-			log(logStatement, uName, ipAddress);
-			log(retStatement, uName, ipAddress);
-		} else {
-			System.out.println(ERR_BAD_IP);
-			log(ERR_BAD_IP, uName, "BAD_IP_ADDR");
-		}
-	}
-	
-	private static void realizePlayerSignIn(String uName, String password, String ipAddress) throws RemoteException, MalformedURLException, NotBoundException {
-		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
-		serverToConnect = discoveryStub.getRegionServer(ipAddress);
-		
-		String logStatement = "Requesting Sign-In Action on Region Server -- " + (serverToConnect  == null ? "Unrecognized Geo-Region" : serverToConnect);
-		System.out.println(logStatement);
-		
-		if(serverToConnect != null) {
-			serverStub = (GameServerRMI) Naming.lookup("rmi://127.0.0.1:1098" + serverToConnect);
-			String retStatement = serverStub.playerSignIn(uName, password, ipAddress);
-			System.out.println(retStatement);
-			log(logStatement, uName, ipAddress);
-			log(retStatement, uName, ipAddress);
-		} else {
-			System.out.println(ERR_BAD_IP);
-			log(ERR_BAD_IP, uName, "BAD_IP_ADDR");
-		}
-	}
-
-	private static void realizePlayerSignOut(String uName, String ipAddress) throws RemoteException, MalformedURLException, NotBoundException {
-		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
-		serverToConnect = discoveryStub.getRegionServer(ipAddress);
-		
-		String logStatement = "Requesting Sign-Out Action on Region Server -- " + (serverToConnect  == null ? "Unrecognized Geo-Region" : serverToConnect);
-		System.out.println(logStatement);
-		
-		if(serverToConnect != null) {
-			serverStub = (GameServerRMI) Naming.lookup("rmi://127.0.0.1:1098" + serverToConnect);
-			String retStatement = serverStub.playerSignOut(uName, ipAddress);
-			System.out.println(retStatement);
-			log(logStatement, uName, ipAddress);
-			log(retStatement, uName, ipAddress);
-		} else {
-			System.out.println(ERR_BAD_IP);
-			log(ERR_BAD_IP, uName, "BAD_IP_ADDR");
 		}
 	}
 
@@ -112,13 +52,16 @@ public class PlayersClient {
 		age = sc.nextInt();
 		sc.nextLine();
 		System.out.println("Enter IP Address:");
-		ipAddress = sc.nextLine();
-		
+		ipAddress = ClientUtilities.getIpAddressInput();
 		try {
 			realizeCreatePlayerAccount(fName, lName, uName, password, age, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
-			e.printStackTrace();
-			log(e.getMessage(), uName, ipAddress);
+			String err = e.getMessage();
+			if(e instanceof ConnectException) {
+				err = "ERROR: Region server is not active";
+				System.out.println(err);
+			}
+			log(err, uName, ipAddress);
 		}
 	}
 		
@@ -132,13 +75,16 @@ public class PlayersClient {
 		System.out.println("Enter Password:");
 		password = sc.nextLine();
 		System.out.println("Enter IP Address:");
-		ipAddress = sc.nextLine();
-		
+		ipAddress = ClientUtilities.getIpAddressInput();
 		try {
 			realizePlayerSignIn(uName, password, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
-			e.printStackTrace();
-			log(e.getMessage(), uName, ipAddress);
+			String err = e.getMessage();
+			if(e instanceof ConnectException) {
+				err = "ERROR: Region server is not active";
+				System.out.println(err);
+			}
+			log(err, uName, ipAddress);
 		}
 
 	}
@@ -150,15 +96,45 @@ public class PlayersClient {
 		System.out.println("Enter User Name:");
 		uName = sc.nextLine();
 		System.out.println("Enter IP Address:");
-		ipAddress = sc.nextLine();
-		
+		ipAddress = ClientUtilities.getIpAddressInput();
 		try {
 			realizePlayerSignOut(uName, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
-			e.printStackTrace();
-			log(e.getMessage(), uName, ipAddress);
+			String err = e.getMessage();
+			if(e instanceof ConnectException) {
+				err = "ERROR: Region server is not active";
+				System.out.println(err);
+			}
+			log(err, uName, ipAddress);
 		}
 
+	}
+	
+	private static void realizeCreatePlayerAccount(String fName, String lName, String uName, String password, int age, String ipAddress) throws MalformedURLException, RemoteException, NotBoundException {
+		int registryPort = ClientUtilities.getRegionServer(ipAddress);
+		
+		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
+		String retStatement = serverStub.createPlayerAccount(fName, lName, uName, password, ipAddress, age);
+		System.out.println(retStatement);
+		log(retStatement, uName, ipAddress);
+	}
+	
+	private static void realizePlayerSignIn(String uName, String password, String ipAddress) throws RemoteException, MalformedURLException, NotBoundException {
+		int registryPort = ClientUtilities.getRegionServer(ipAddress);
+		
+		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
+		String retStatement = serverStub.playerSignIn(uName, password, ipAddress);
+		System.out.println(retStatement);
+		log(retStatement, uName, ipAddress);
+	}
+
+	private static void realizePlayerSignOut(String uName, String ipAddress) throws RemoteException, MalformedURLException, NotBoundException {
+		int registryPort = ClientUtilities.getRegionServer(ipAddress);
+		
+		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
+		String retStatement = serverStub.playerSignOut(uName, ipAddress);
+		System.out.println(retStatement);
+		log(retStatement, uName, ipAddress);
 	}
 	
 	private static synchronized void log(String logStatement, String uName, String ipAddress) {

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.rmi.ConnectException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -14,13 +15,10 @@ import java.util.Scanner;
 
 import exceptions.UnknownServerRegionException;
 import server.GameServerRMI;
-import server.ServerDiscovererRMI;
 
 public class AdministratorsClient {
 	
-	private static final String ERR_BAD_IP = "The Server IP Address is invalid!";
 	private static Scanner sc = new Scanner(System.in);
-	private static ServerDiscovererRMI discoveryStub;
 	private static String serverToConnect;
 	private static GameServerRMI serverStub;
 	
@@ -41,13 +39,17 @@ public class AdministratorsClient {
 		System.out.println("Enter Password:");
 		password = sc.nextLine();
 		System.out.println("Enter IP Address:");
-		ipAddress = sc.nextLine();
+		ipAddress = ClientUtilities.getIpAddressInput();
 		
 		try {
 			realizeAdminSignIn(uName, password, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
-			e.printStackTrace();
-			log(e.getMessage(), uName, ipAddress);
+			String err = e.getMessage();
+			if(e instanceof ConnectException) {
+				err = "ERROR: Region server is not active";
+				System.out.println(err);
+			}
+			log(err, uName, ipAddress);
 		}
 
 	}
@@ -58,14 +60,17 @@ public class AdministratorsClient {
 		System.out.println("Enter User Name:");
 		uName = sc.nextLine();
 		System.out.println("Enter IP Address:");
-		ipAddress = sc.nextLine();
+		ipAddress = ClientUtilities.getIpAddressInput();
 		
 		try {
 			realizeAdminSignOut(uName, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			log(e.getMessage(), uName, ipAddress);
+			String err = e.getMessage();
+			if(e instanceof ConnectException) {
+				err = "ERROR: Region server is not active";
+				System.out.println(err);
+			}
+			log(err, uName, ipAddress);
 		}
 
 	}
@@ -79,74 +84,50 @@ public class AdministratorsClient {
 		System.out.println("Enter Password:");
 		password = sc.nextLine();
 		System.out.println("Enter IP Address:");
-		ipAddress = sc.nextLine();
+		ipAddress = ClientUtilities.getIpAddressInput();
 		
 		try {
 			realizeAdminGetPlayerStatus(uName, password, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException | UnknownServerRegionException e) {
-			e.printStackTrace();
-			log(e.getMessage(), uName, ipAddress);
+			String err = e.getMessage();
+			if(e instanceof ConnectException) {
+				err = "ERROR: Region server is not active";
+				System.out.println(err);
+			}
+			log(err, uName, ipAddress);
 		}
 
 	}
 	
 	private static void realizeAdminSignIn(String uName, String password, String ipAddress) throws RemoteException, MalformedURLException, NotBoundException {
-		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
-		serverToConnect = discoveryStub.getRegionServer(ipAddress);
+		int registryPort = ClientUtilities.getRegionServer(ipAddress);
 		
-		String logStatement = "Requesting Sign-In Action on Region Server -- " + (serverToConnect == null ? "Unrecognized Geo-Region" : serverToConnect);
-		System.out.println(logStatement);
 		
-		if(serverToConnect != null) {
-			serverStub = (GameServerRMI) Naming.lookup("rmi://127.0.0.1:1098" + serverToConnect);
-			String retStatement = serverStub.adminSignIn(uName, password, ipAddress);
-			System.out.println(retStatement);
-			log(logStatement, uName, serverToConnect);
-			log(retStatement, uName, serverToConnect);
-		} else {
-			System.out.println(ERR_BAD_IP);
-			log(ERR_BAD_IP, uName, "BAD_IP_ADDR");
-		}
+		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
+		String retStatement = serverStub.adminSignIn(uName, password, ipAddress);
+		System.out.println(retStatement);
+		log(retStatement, uName, serverToConnect);
 	}
 	
 	private static void realizeAdminSignOut(String uName, String ipAddress) throws RemoteException, MalformedURLException, NotBoundException {
-		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
-		serverToConnect = discoveryStub.getRegionServer(ipAddress);
+		int registryPort = ClientUtilities.getRegionServer(ipAddress);
 		
-		String logStatement = "Requesting Sign-Out Action on Region Server -- " + (serverToConnect == null ? "Unrecognized Geo-Region" : serverToConnect);
-		System.out.println(logStatement);
 		
-		if(serverToConnect != null) {
-			serverStub = (GameServerRMI) Naming.lookup("rmi://127.0.0.1:1098" + serverToConnect);
-			String retStatement = serverStub.adminSignOut(uName, ipAddress);
-			System.out.println(retStatement);
-			log(logStatement, uName, serverToConnect);
-			log(retStatement, uName, serverToConnect);
-		} else {
-			System.out.println(ERR_BAD_IP);
-			log(ERR_BAD_IP, uName, "BAD_IP_ADDR");
-		}
+		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
+		String retStatement = serverStub.adminSignOut(uName, ipAddress);
+		System.out.println(retStatement);
+		log(retStatement, uName, serverToConnect);
 	}
 	
 	private static void realizeAdminGetPlayerStatus(String uName, String password, String ipAddress) throws MalformedURLException, RemoteException, NotBoundException, UnknownServerRegionException{
-		discoveryStub = (ServerDiscovererRMI) Naming.lookup("rmi://127.0.0.1:1098/Discover");
-		serverToConnect = discoveryStub.getRegionServer(ipAddress);
-		
-		String logStatement = "Requesting getPlayerStatus Action on Region Server -- " + (serverToConnect  == null ? "Unrecognized Geo-Region" : serverToConnect);
-		System.out.println(logStatement);
-		
-		if(serverToConnect != null) {
-			serverStub = (GameServerRMI) Naming.lookup("rmi://127.0.0.1:1098" + serverToConnect);
-			String retStatement = serverStub.getPlayerStatus(uName, password, ipAddress);
-			System.out.println(retStatement);
-			log(logStatement, uName, serverToConnect);
-			log(retStatement, uName, serverToConnect);
-		} else {
-			System.out.println(ERR_BAD_IP);
-			log(ERR_BAD_IP, uName, "BAD_IP_ADDR");
-		}
+		int registryPort = ClientUtilities.getRegionServer(ipAddress);
+
+		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
+		String retStatement = serverStub.getPlayerStatus(uName, password, ipAddress);
+		System.out.println(retStatement);
+		log(retStatement, uName, serverToConnect);
+
 	}
-	
 	
 	private static synchronized void log(String logStatement, String uName, String serverToConnect) {
 		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
@@ -163,7 +144,6 @@ public class AdministratorsClient {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-	
+	}	
 
 }
