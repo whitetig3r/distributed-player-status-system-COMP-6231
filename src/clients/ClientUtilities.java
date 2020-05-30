@@ -2,8 +2,6 @@ package clients;
 
 import java.util.Scanner;
 
-import exceptions.UnknownServerRegionException;
-
 public class ClientUtilities {
 	
 	private static boolean isValidIP(String ipAddr) {
@@ -43,5 +41,18 @@ public class ClientUtilities {
 			ipAddress = sc.nextLine();
 		}
 		return ipAddress;
+	}
+
+	public static String getServerName(int registryPort) {
+		switch(registryPort) {
+			case 1098:
+				return "/NA";
+			case 1099:
+				return "/EU";
+			case 1100:
+				return "/AS";
+			default:
+				return "/UNKNOWN";
+		}
 	}
 }

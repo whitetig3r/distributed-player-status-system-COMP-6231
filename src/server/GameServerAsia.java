@@ -13,7 +13,7 @@ public class GameServerAsia {
 
 	public static void main(String[] args) {
 		try {
-			System.out.println("NOTE -- " + "Server Logs available at " + System.getProperty("user.dir") + "/server_logs/AS.log");
+			System.out.println("NOTE -- " + "Server Logs available at " + System.getProperty("user.dir") + "/server_logs/AS-server.log");
 	    	GameServerRMI gameServerAS = new CoreGameServer("AS");
 	    	Registry reg = LocateRegistry.createRegistry(1100);
 	    	reg.rebind("GameServer", gameServerAS);

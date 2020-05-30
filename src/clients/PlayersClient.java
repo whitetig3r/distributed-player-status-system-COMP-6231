@@ -23,6 +23,7 @@ public class PlayersClient {
 
 	public static void main(String[] args) {
 		try {
+			// TODO Build an interactive menu driven UI
 			System.out.println("NOTE -- Player Logs available at " + System.getProperty("user.dir") + "/player_logs");
 			createPlayerAccount();
 			playerSignIn();
@@ -56,12 +57,7 @@ public class PlayersClient {
 		try {
 			realizeCreatePlayerAccount(fName, lName, uName, password, age, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
-			String err = e.getMessage();
-			if(e instanceof ConnectException) {
-				err = "ERROR: Region server is not active";
-				System.out.println(err);
-			}
-			log(err, uName, ipAddress);
+			handleServerDown(uName, ipAddress, e);
 		}
 	}
 		
@@ -79,12 +75,7 @@ public class PlayersClient {
 		try {
 			realizePlayerSignIn(uName, password, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
-			String err = e.getMessage();
-			if(e instanceof ConnectException) {
-				err = "ERROR: Region server is not active";
-				System.out.println(err);
-			}
-			log(err, uName, ipAddress);
+			handleServerDown(uName, ipAddress, e);
 		}
 
 	}
@@ -100,12 +91,7 @@ public class PlayersClient {
 		try {
 			realizePlayerSignOut(uName, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
-			String err = e.getMessage();
-			if(e instanceof ConnectException) {
-				err = "ERROR: Region server is not active";
-				System.out.println(err);
-			}
-			log(err, uName, ipAddress);
+			handleServerDown(uName, ipAddress, e);
 		}
 
 	}
@@ -152,6 +138,15 @@ public class PlayersClient {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private static void handleServerDown(String uName, String ipAddress, Exception e) {
+		String err = e.getMessage();
+		if(e instanceof ConnectException) {
+			err = "ERROR: Region server is not active";
+			System.out.println(err);
+		}
+		log(err, uName, ipAddress);
 	}
 
 }

@@ -8,6 +8,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.time.LocalDateTime;
@@ -32,6 +33,7 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 	private static final long serialVersionUID = -3393990750400755075L;
 	private final ArrayList<Integer> EXT_UDP_PORTS = new ArrayList<>(Arrays.asList(6789,6790,6791));
 	private int INT_UDP_PORT;
+	private final int SERVER_TIMEOUT_IN_MILLIS = 5000;
 	
 	private HashMap<Character,ArrayList<Player>> playerHash = new HashMap<>();
 
@@ -199,12 +201,27 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 	}
 	
 	public String getPlayerStatus(String uName, String password, String ipAddress) {
-		if(uName.equals("Admin") && password.equals("Admin")) {
-			String ret = retrievePlayerStatuses(ipAddress);
-			serverLog(ret, ipAddress);
-			return ret;
+		String retStatement = "Unrecognized Error while requesting player status!";
+		
+		if(!(uName.equals("Admin") && password.equals("Admin"))) {
+			retStatement = "Incorrect credentials for Admin!";
+		} else {
+		
+			Optional<Player> admin = this.playerHash.get('A').stream().filter(player -> {
+				return player.getuName().equals("Admin") && 
+						player.getPassword().equals("Admin") &&
+						player.getStatus();
+			}).findAny();
+				
+			if(admin.isPresent()) {
+					String ret = retrievePlayerStatuses(ipAddress);
+					serverLog(ret, ipAddress);
+					return ret;
+			}
+			
+			retStatement = "Admin for this server is not signed-in";
 		}
-		String retStatement = "Incorrect credentials for Admin!";
+		
 		serverLog(retStatement, ipAddress);
 		return retStatement;
 	}
@@ -291,9 +308,11 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
     			aSocket.send(reply);
     		}
 		} catch (SocketException e){
-		 	System.out.println("Socket: " + e.getMessage());
+			System.out.println("Socket Exception: " + e.getMessage());
+			serverLog(e.getMessage(), "Admin");
 		} catch (IOException e) {
-			System.out.println("IO: " + e.getMessage());
+			System.out.println("IO Exception: " + e.getMessage());
+			serverLog(e.getMessage(), "Admin");
 		} finally {
 			if(aSocket != null) aSocket.close();
 		}
@@ -304,6 +323,7 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		String reqOp = "getStatus";
 		try {
 			aSocket = new DatagramSocket();    
+			aSocket.setSoTimeout(SERVER_TIMEOUT_IN_MILLIS); 
 			byte [] m = reqOp.getBytes();
 			InetAddress aHost = InetAddress.getByName("127.0.0.1");		                                                 
 			DatagramPacket request =
@@ -315,14 +335,19 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 			String succ = new String(reply.getData());	
 			serverLog(succ, "Admin");
 			return succ;
+		} catch (SocketTimeoutException e) {
+			String timeOut = String.format("Request to server on port %d has timed out!", serverPort);
+			serverLog(timeOut, "Admin");
+			return timeOut;
 		} catch (SocketException e){
-			System.out.println("Socket: " + e.getMessage());
+			serverLog(e.getMessage(), "Admin");
+			return "Socket Exception: " + e.getMessage();
 		} catch (IOException e) {
-			System.out.println("IO: " + e.getMessage());
+			serverLog(e.getMessage(), "Admin");
+			return "IO Exception: " + e.getMessage();
 		} finally {
 			if(aSocket != null) aSocket.close();
 		}
-		return "ERROR Retrieving player statuses from other servers!";
 	}
 	
 	// END OF NETWORK UTILS

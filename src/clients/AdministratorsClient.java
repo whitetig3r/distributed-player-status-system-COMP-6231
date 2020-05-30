@@ -19,11 +19,12 @@ import server.GameServerRMI;
 public class AdministratorsClient {
 	
 	private static Scanner sc = new Scanner(System.in);
-	private static String serverToConnect;
 	private static GameServerRMI serverStub;
+	private static String serverToConnect;
 	
 
 	public static void main(String[] args) {
+		// TODO Build an interactive menu driven UI
 		System.out.println("NOTE -- Admin Logs available at " + System.getProperty("user.dir") + "/admin_logs");
 		adminSignIn();
 		adminGetPlayerStatus();
@@ -44,12 +45,7 @@ public class AdministratorsClient {
 		try {
 			realizeAdminSignIn(uName, password, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
-			String err = e.getMessage();
-			if(e instanceof ConnectException) {
-				err = "ERROR: Region server is not active";
-				System.out.println(err);
-			}
-			log(err, uName, ipAddress);
+			handleServerDown(uName, ipAddress, e);
 		}
 
 	}
@@ -65,12 +61,7 @@ public class AdministratorsClient {
 		try {
 			realizeAdminSignOut(uName, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
-			String err = e.getMessage();
-			if(e instanceof ConnectException) {
-				err = "ERROR: Region server is not active";
-				System.out.println(err);
-			}
-			log(err, uName, ipAddress);
+			handleServerDown(uName, ipAddress, e);
 		}
 
 	}
@@ -89,19 +80,14 @@ public class AdministratorsClient {
 		try {
 			realizeAdminGetPlayerStatus(uName, password, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException | UnknownServerRegionException e) {
-			String err = e.getMessage();
-			if(e instanceof ConnectException) {
-				err = "ERROR: Region server is not active";
-				System.out.println(err);
-			}
-			log(err, uName, ipAddress);
+			handleServerDown(uName, ipAddress, e);
 		}
 
 	}
-	
+
 	private static void realizeAdminSignIn(String uName, String password, String ipAddress) throws RemoteException, MalformedURLException, NotBoundException {
 		int registryPort = ClientUtilities.getRegionServer(ipAddress);
-		
+		serverToConnect = ClientUtilities.getServerName(registryPort);
 		
 		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
 		String retStatement = serverStub.adminSignIn(uName, password, ipAddress);
@@ -111,7 +97,7 @@ public class AdministratorsClient {
 	
 	private static void realizeAdminSignOut(String uName, String ipAddress) throws RemoteException, MalformedURLException, NotBoundException {
 		int registryPort = ClientUtilities.getRegionServer(ipAddress);
-		
+		serverToConnect = ClientUtilities.getServerName(registryPort);
 		
 		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
 		String retStatement = serverStub.adminSignOut(uName, ipAddress);
@@ -121,6 +107,7 @@ public class AdministratorsClient {
 	
 	private static void realizeAdminGetPlayerStatus(String uName, String password, String ipAddress) throws MalformedURLException, RemoteException, NotBoundException, UnknownServerRegionException{
 		int registryPort = ClientUtilities.getRegionServer(ipAddress);
+		serverToConnect = ClientUtilities.getServerName(registryPort);
 
 		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
 		String retStatement = serverStub.getPlayerStatus(uName, password, ipAddress);
@@ -134,7 +121,7 @@ public class AdministratorsClient {
 		 LocalDateTime tStamp = LocalDateTime.now(); 
 		 String writeString = String.format("[%s] %s @ (Admin-%s) -- %s", dtf.format(tStamp), uName, serverToConnect.substring(1), logStatement);
 		 try{
-			File file = new File(String.format("admin_logs/%s.log", serverToConnect.substring(1)));
+			File file = new File(String.format("admin_logs/%s-admin.log", serverToConnect.substring(1)));
 			file.getParentFile().mkdirs();
 			FileWriter fw = new FileWriter(file, true);
 			BufferedWriter logger = new BufferedWriter(fw);
@@ -145,5 +132,15 @@ public class AdministratorsClient {
 			e.printStackTrace();
 		}
 	}	
+	
+	private static void handleServerDown(String uName, String ipAddress, Exception e) {
+		String err = e.getMessage();
+		if(e instanceof ConnectException) {
+			err = "ERROR: Region server is not active";
+			System.out.println(err);
+		}
+		log(err, uName, ipAddress);
+	}
+	
 
 }
