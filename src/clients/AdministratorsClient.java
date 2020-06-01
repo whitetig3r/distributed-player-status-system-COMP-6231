@@ -24,7 +24,6 @@ public class AdministratorsClient {
 	
 
 	public static void main(String[] args) {
-		// TODO Build an interactive menu driven UI
 		System.out.println("NOTE -- Admin Logs available at " + System.getProperty("user.dir") + "/admin_logs");
 		final String MENU_STRING = "\n-- Admin Client CLI --\n"
 				+ "Pick an option ...\n"
