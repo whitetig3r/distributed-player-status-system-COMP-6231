@@ -1,4 +1,4 @@
-package server;
+package servers;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -39,7 +39,7 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 
 	private String gameServerLocation;
 
-	protected CoreGameServer(String location) throws RemoteException, UnknownServerRegionException {
+	public CoreGameServer(String location) throws RemoteException, UnknownServerRegionException {
 		super();
 		this.gameServerLocation = location; 
 		// create a region administrator account

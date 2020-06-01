@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 import exceptions.UnknownServerRegionException;
-import server.GameServerRMI;
+import servers.GameServerRMI;
 
 public class AdministratorsClient {
 	
