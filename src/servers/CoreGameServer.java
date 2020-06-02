@@ -44,12 +44,19 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		this.gameServerLocation = location; 
 		// create a region administrator account
 		createPlayerAccount("Admin","Admin","Admin","Admin", getRegionDefaultIP(), 0);
+		seedDataStore();
 		setExternalPorts();
 		runRegionUdpServer();
 	}
 	
 	// CORE PLAYER FUNCTIONALITY
 	
+	private void seedDataStore() throws UnknownServerRegionException {
+		createPlayerAccount("Allen","White","whiteallen7","willow7", getRegionDefaultIP(), 23);
+		createPlayerAccount("Bill","Johns","billy20","goodpass28", getRegionDefaultIP(), 48);
+		createPlayerAccount("Crystal","Reigo","petula71","whatapassword", getRegionDefaultIP(), 35);
+	}
+
 	public synchronized String createPlayerAccount(String fName, String lName, String uName, String password, String ipAddress, int age) {
 		serverLog("Initiating CREATEACCOUNT for player", ipAddress);
 		
