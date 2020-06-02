@@ -16,7 +16,7 @@ import java.util.Scanner;
 import exceptions.UnknownServerRegionException;
 import servers.GameServerRMI;
 
-public class AdministratorsClient {
+public class AdministratorsClient extends CoreClient {
 	
 	private static Scanner sc = new Scanner(System.in);
 	private static GameServerRMI serverStub;
@@ -62,10 +62,12 @@ public class AdministratorsClient {
 		String uName;
 		String password;
 		String ipAddress;
-		uName = ClientUtilities.getSafeStringInput("Enter User Name:");
-		password = ClientUtilities.getSafeStringInput("Enter Password:");
+		
+		setLoggingContext("UNRESOLVED", "UnresolvedIP", true);
+		uName = getSafeStringInput("Enter User Name:");
+		password = getSafeStringInput("Enter Password:");
 		System.out.println("Enter IP Address:");
-		ipAddress = ClientUtilities.getIpAddressInput();
+		ipAddress = getIpAddressInput();
 		
 		try {
 			realizeAdminSignIn(uName, password, ipAddress);
@@ -78,9 +80,11 @@ public class AdministratorsClient {
 	private static void adminSignOut() {
 		String uName;
 		String ipAddress;
-		uName = ClientUtilities.getSafeStringInput("Enter User Name:");
+		
+		setLoggingContext("UNRESOLVED", "UnresolvedIP", true);
+		uName = getSafeStringInput("Enter User Name:");
 		System.out.println("Enter IP Address:");
-		ipAddress = ClientUtilities.getIpAddressInput();
+		ipAddress = getIpAddressInput();
 		
 		try {
 			realizeAdminSignOut(uName, ipAddress);
@@ -94,10 +98,12 @@ public class AdministratorsClient {
 		String uName;
 		String password;
 		String ipAddress;
-		uName = ClientUtilities.getSafeStringInput("Enter User Name:");
-		password = ClientUtilities.getSafeStringInput("Enter Password:");
+		
+		setLoggingContext("UNRESOLVED", "UnresolvedIP", true);
+		uName = getSafeStringInput("Enter User Name:");
+		password = getSafeStringInput("Enter Password:");
 		System.out.println("Enter IP Address:");
-		ipAddress = ClientUtilities.getIpAddressInput();
+		ipAddress = getIpAddressInput();
 		
 		try {
 			realizeAdminGetPlayerStatus(uName, password, ipAddress);
@@ -108,52 +114,35 @@ public class AdministratorsClient {
 	}
 
 	private static void realizeAdminSignIn(String uName, String password, String ipAddress) throws RemoteException, MalformedURLException, NotBoundException {
-		int registryPort = ClientUtilities.getRegionServer(ipAddress);
-		serverToConnect = ClientUtilities.getServerName(registryPort);
+		int registryPort = getRegionServer(ipAddress);
+		serverToConnect = getServerName(registryPort);
 		
 		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
 		String retStatement = serverStub.adminSignIn(uName, password, ipAddress);
 		System.out.println(retStatement);
-		log(retStatement, uName, serverToConnect);
+		adminLog(retStatement, uName, serverToConnect);
 	}
 	
 	private static void realizeAdminSignOut(String uName, String ipAddress) throws RemoteException, MalformedURLException, NotBoundException {
-		int registryPort = ClientUtilities.getRegionServer(ipAddress);
-		serverToConnect = ClientUtilities.getServerName(registryPort);
+		int registryPort = getRegionServer(ipAddress);
+		serverToConnect = getServerName(registryPort);
 		
 		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
 		String retStatement = serverStub.adminSignOut(uName, ipAddress);
 		System.out.println(retStatement);
-		log(retStatement, uName, serverToConnect);
+		adminLog(retStatement, uName, serverToConnect);
 	}
 	
 	private static void realizeAdminGetPlayerStatus(String uName, String password, String ipAddress) throws MalformedURLException, RemoteException, NotBoundException, UnknownServerRegionException{
-		int registryPort = ClientUtilities.getRegionServer(ipAddress);
-		serverToConnect = ClientUtilities.getServerName(registryPort);
+		int registryPort = getRegionServer(ipAddress);
+		serverToConnect = getServerName(registryPort);
 
 		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
 		String retStatement = serverStub.getPlayerStatus(uName, password, ipAddress);
 		System.out.println(retStatement);
-		log(retStatement, uName, serverToConnect);
+		adminLog(retStatement, uName, serverToConnect);
 
 	}
-	
-	private static synchronized void log(String logStatement, String uName, String serverToConnect) {
-		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
-		 LocalDateTime tStamp = LocalDateTime.now(); 
-		 String writeString = String.format("[%s] %s @ (Admin-%s) -- %s", dtf.format(tStamp), uName, serverToConnect.substring(1), logStatement);
-		 try{
-			File file = new File(String.format("admin_logs/%s-admin.log", serverToConnect.substring(1)));
-			file.getParentFile().mkdirs();
-			FileWriter fw = new FileWriter(file, true);
-			BufferedWriter logger = new BufferedWriter(fw);
-			logger.write(writeString);
-			logger.newLine();
-			logger.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}	
 	
 	private static void handleServerDown(String uName, String ipAddress, Exception e) {
 		String err = e.getMessage();
@@ -161,7 +150,7 @@ public class AdministratorsClient {
 			err = "ERROR: Region server is not active";
 			System.out.println(err);
 		}
-		log(err, uName, ipAddress);
+		adminLog(err, uName, ipAddress);
 	}
 	
 

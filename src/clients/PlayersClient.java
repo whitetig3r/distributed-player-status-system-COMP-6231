@@ -15,7 +15,7 @@ import java.util.Scanner;
 
 import servers.GameServerRMI;
 
-public class PlayersClient {
+public class PlayersClient extends CoreClient {
 
 	private static Scanner sc = new Scanner(System.in);
 	private static GameServerRMI serverStub; 
@@ -69,14 +69,15 @@ public class PlayersClient {
 		String ipAddress;
 		int age;
 		
-		fName = ClientUtilities.getSafeStringInput("Enter First Name:");
-		lName = ClientUtilities.getSafeStringInput("Enter Last Name:");
-		uName = ClientUtilities.getSafeStringInput("Enter User Name:");
-		password = ClientUtilities.getSafeStringInput("Enter Password:");
-		age = ClientUtilities.getSafeIntInput("Enter Age:");
+		setLoggingContext("UNRESOLVED_PLAYER", "UnresolvedIP");
+		fName = getSafeStringInput("Enter First Name:");
+		lName = getSafeStringInput("Enter Last Name:");
+		uName = getSafeStringInput("Enter User Name:");
+		password = getSafeStringInput("Enter Password:");
+		age = getSafeIntInput("Enter Age:");
 		
 		System.out.println("Enter IP Address:");
-		ipAddress = ClientUtilities.getIpAddressInput();
+		ipAddress = getIpAddressInput();
 		
 		try {
 			realizeCreatePlayerAccount(fName, lName, uName, password, age, ipAddress);
@@ -90,10 +91,11 @@ public class PlayersClient {
 		String password;
 		String ipAddress;
 		
-		uName = ClientUtilities.getSafeStringInput("Enter User Name:");
-		password = ClientUtilities.getSafeStringInput("Enter Password:");
+		setLoggingContext("UNRESOLVED_PLAYER", "UnresolvedIP");
+		uName = getSafeStringInput("Enter User Name:");
+		password = getSafeStringInput("Enter Password:");
 		System.out.println("Enter IP Address:");
-		ipAddress = ClientUtilities.getIpAddressInput();
+		ipAddress = getIpAddressInput();
 		try {
 			realizePlayerSignIn(uName, password, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
@@ -106,9 +108,10 @@ public class PlayersClient {
 		String uName;
 		String ipAddress;
 		
-		uName = ClientUtilities.getSafeStringInput("Enter User Name:");
+		setLoggingContext("UNRESOLVED_PLAYER", "UnresolvedIP");
+		uName = getSafeStringInput("Enter User Name:");
 		System.out.println("Enter IP Address:");
-		ipAddress = ClientUtilities.getIpAddressInput();
+		ipAddress = getIpAddressInput();
 		try {
 			realizePlayerSignOut(uName, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
@@ -118,49 +121,30 @@ public class PlayersClient {
 	}
 	
 	private static void realizeCreatePlayerAccount(String fName, String lName, String uName, String password, int age, String ipAddress) throws MalformedURLException, RemoteException, NotBoundException {
-		int registryPort = ClientUtilities.getRegionServer(ipAddress);
+		int registryPort = getRegionServer(ipAddress);
 		
 		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
 		String retStatement = serverStub.createPlayerAccount(fName, lName, uName, password, ipAddress, age);
 		System.out.println(retStatement);
-		log(retStatement, uName, ipAddress);
+		playerLog(retStatement, uName, ipAddress);
 	}
 	
 	private static void realizePlayerSignIn(String uName, String password, String ipAddress) throws RemoteException, MalformedURLException, NotBoundException {
-		int registryPort = ClientUtilities.getRegionServer(ipAddress);
+		int registryPort = getRegionServer(ipAddress);
 		
 		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
 		String retStatement = serverStub.playerSignIn(uName, password, ipAddress);
 		System.out.println(retStatement);
-		log(retStatement, uName, ipAddress);
+		playerLog(retStatement, uName, ipAddress);
 	}
 
 	private static void realizePlayerSignOut(String uName, String ipAddress) throws RemoteException, MalformedURLException, NotBoundException {
-		int registryPort = ClientUtilities.getRegionServer(ipAddress);
+		int registryPort = getRegionServer(ipAddress);
 		
 		serverStub = (GameServerRMI) Naming.lookup(String.format("rmi://127.0.0.1:%d/GameServer",registryPort));
 		String retStatement = serverStub.playerSignOut(uName, ipAddress);
 		System.out.println(retStatement);
-		log(retStatement, uName, ipAddress);
-	}
-	
-	private static synchronized void log(String logStatement, String uName, String ipAddress) {
-		 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
-		 LocalDateTime tStamp = LocalDateTime.now(); 
-		 String writeString = String.format("[%s] %s @ (%s) -- %s", dtf.format(tStamp), uName, ipAddress, logStatement);
-		 int registryPort = ClientUtilities.getRegionServer(ipAddress);
-		 String serverRegion = ClientUtilities.getServerName(registryPort);
-		 try{
-			File file = new File(String.format("player_logs/%s/%s.log", serverRegion.substring(1), uName));
-			file.getParentFile().mkdirs();
-			FileWriter fw = new FileWriter(file, true);
-			BufferedWriter logger = new BufferedWriter(fw);
-			logger.write(writeString);
-			logger.newLine();
-			logger.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		playerLog(retStatement, uName, ipAddress);
 	}
 	
 	private static void handleServerDown(String uName, String ipAddress, Exception e) {
@@ -169,7 +153,7 @@ public class PlayersClient {
 			err = "ERROR: Region server is not active";
 			System.out.println(err);
 		}
-		log(err, uName, ipAddress);
+		playerLog(err, uName, ipAddress);
 	}
 
 }
