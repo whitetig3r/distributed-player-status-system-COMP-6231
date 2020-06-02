@@ -62,10 +62,8 @@ public class AdministratorsClient {
 		String uName;
 		String password;
 		String ipAddress;
-		System.out.println("Enter User Name:");
-		uName = sc.nextLine();
-		System.out.println("Enter Password:");
-		password = sc.nextLine();
+		uName = ClientUtilities.getSafeStringInput("Enter User Name:");
+		password = ClientUtilities.getSafeStringInput("Enter Password:");
 		System.out.println("Enter IP Address:");
 		ipAddress = ClientUtilities.getIpAddressInput();
 		
@@ -80,8 +78,7 @@ public class AdministratorsClient {
 	private static void adminSignOut() {
 		String uName;
 		String ipAddress;
-		System.out.println("Enter User Name:");
-		uName = sc.nextLine();
+		uName = ClientUtilities.getSafeStringInput("Enter User Name:");
 		System.out.println("Enter IP Address:");
 		ipAddress = ClientUtilities.getIpAddressInput();
 		
@@ -97,10 +94,8 @@ public class AdministratorsClient {
 		String uName;
 		String password;
 		String ipAddress;
-		System.out.println("Enter User Name:");
-		uName = sc.nextLine();
-		System.out.println("Enter Password:");
-		password = sc.nextLine();
+		uName = ClientUtilities.getSafeStringInput("Enter User Name:");
+		password = ClientUtilities.getSafeStringInput("Enter Password:");
 		System.out.println("Enter IP Address:");
 		ipAddress = ClientUtilities.getIpAddressInput();
 		

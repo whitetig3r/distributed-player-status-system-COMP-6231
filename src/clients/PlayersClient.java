@@ -69,19 +69,15 @@ public class PlayersClient {
 		String ipAddress;
 		int age;
 		
-		System.out.println("Enter First Name:");
-		fName = sc.nextLine();
-		System.out.println("Enter Last Name:");
-		lName = sc.nextLine();
-		System.out.println("Enter User Name:");
-		uName = sc.nextLine();
-		System.out.println("Enter Password:");
-		password = sc.nextLine();
-		System.out.println("Enter Age:");
-		age = sc.nextInt();
-		sc.nextLine();
+		fName = ClientUtilities.getSafeStringInput("Enter First Name:");
+		lName = ClientUtilities.getSafeStringInput("Enter Last Name:");
+		uName = ClientUtilities.getSafeStringInput("Enter User Name:");
+		password = ClientUtilities.getSafeStringInput("Enter Password:");
+		age = ClientUtilities.getSafeIntInput("Enter Age:");
+		
 		System.out.println("Enter IP Address:");
 		ipAddress = ClientUtilities.getIpAddressInput();
+		
 		try {
 			realizeCreatePlayerAccount(fName, lName, uName, password, age, ipAddress);
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
@@ -94,10 +90,8 @@ public class PlayersClient {
 		String password;
 		String ipAddress;
 		
-		System.out.println("Enter User Name:");
-		uName = sc.nextLine();
-		System.out.println("Enter Password:");
-		password = sc.nextLine();
+		uName = ClientUtilities.getSafeStringInput("Enter User Name:");
+		password = ClientUtilities.getSafeStringInput("Enter Password:");
 		System.out.println("Enter IP Address:");
 		ipAddress = ClientUtilities.getIpAddressInput();
 		try {
@@ -112,8 +106,7 @@ public class PlayersClient {
 		String uName;
 		String ipAddress;
 		
-		System.out.println("Enter User Name:");
-		uName = sc.nextLine();
+		uName = ClientUtilities.getSafeStringInput("Enter User Name:");
 		System.out.println("Enter IP Address:");
 		ipAddress = ClientUtilities.getIpAddressInput();
 		try {
