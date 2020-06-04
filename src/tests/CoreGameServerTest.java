@@ -138,9 +138,9 @@ public class CoreGameServerTest {
 		String uName = "Admin";
 		String password = "Admin";
 		String ipAddress = "132.168.2.22";
-		final String expectedNA = "NA: Online: 0 Offline: 1";
-		final String expectedEU = "EU: Online: 0 Offline: 0";
-		final String expectedAS = "AS: Online: 0 Offline: 0";
+		final String expectedNA = "NA: Online: 0 Offline: 4";
+		final String expectedEU = "EU: Online: 0 Offline: 3";
+		final String expectedAS = "AS: Online: 0 Offline: 3";
 		
 		serverStub.adminSignIn(uName, password, ipAddress);
 		

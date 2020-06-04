@@ -32,6 +32,9 @@ public class PlayersClient extends CoreClient {
 		try {
 			// TODO Build an interactive menu driven UI
 			System.out.println("NOTE -- Player Logs available at " + System.getProperty("user.dir") + "/player_logs/");
+			System.out.println("Seeded Accounts -- \"whiteallen7\" , "
+					+ "\"billy20\" , \"petula71\" -- "
+					+ "Password for all these accounts is \"password\"");
 			while(true) {
 				System.out.println(MENU_STRING);
 				switch(sc.nextLine()) {

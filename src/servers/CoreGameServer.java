@@ -52,9 +52,9 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 	// CORE PLAYER FUNCTIONALITY
 	
 	private void seedDataStore() throws UnknownServerRegionException {
-		createPlayerAccount("Allen","White","whiteallen7","willow7", getRegionDefaultIP(), 23);
-		createPlayerAccount("Bill","Johns","billy20","goodpass28", getRegionDefaultIP(), 48);
-		createPlayerAccount("Crystal","Reigo","petula71","whatapassword", getRegionDefaultIP(), 35);
+		createPlayerAccount("Allen","White","whiteallen7","password", getRegionDefaultIP(), 23);
+		createPlayerAccount("Bill","Johns","billy20","password", getRegionDefaultIP(), 48);
+		createPlayerAccount("Crystal","Reigo","petula71","password", getRegionDefaultIP(), 35);
 	}
 
 	public synchronized String createPlayerAccount(String fName, String lName, String uName, String password, String ipAddress, int age) {
