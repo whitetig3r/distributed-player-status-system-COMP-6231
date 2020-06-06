@@ -142,7 +142,6 @@ public class CoreGameServerTest {
 		final String expectedEU = "EU: Online: 0 Offline: 3";
 		final String expectedAS = "AS: Online: 0 Offline: 3";
 		
-		serverStub.adminSignIn(uName, password, ipAddress);
 		
 	    CompletableFuture<String> threadOneJob = CompletableFuture.supplyAsync(()->{
 	    	try {

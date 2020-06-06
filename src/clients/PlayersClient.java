@@ -1,16 +1,10 @@
 package clients;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.rmi.ConnectException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 import servers.GameServerRMI;
@@ -30,7 +24,6 @@ public class PlayersClient extends CoreClient {
 				+ "4. Exit the CLI\n"
 				+ "--------------------------\n";
 		try {
-			// TODO Build an interactive menu driven UI
 			System.out.println("NOTE -- Player Logs available at " + System.getProperty("user.dir") + "/player_logs/");
 			System.out.println("Seeded Accounts -- \"whiteallen7\" , "
 					+ "\"billy20\" , \"petula71\" -- "

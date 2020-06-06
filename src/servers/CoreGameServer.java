@@ -30,7 +30,10 @@ import models.Player;
 
 public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI {
 
-	private static final long serialVersionUID = -3393990750400755075L;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private final ArrayList<Integer> EXT_UDP_PORTS = new ArrayList<>(Arrays.asList(6789,6790,6791));
 	private int INT_UDP_PORT;
 	private final int SERVER_TIMEOUT_IN_MILLIS = 5000;
@@ -220,16 +223,13 @@ public class CoreGameServer extends UnicastRemoteObject implements GameServerRMI
 		
 			Optional<Player> admin = this.playerHash.get('A').stream().filter(player -> {
 				return player.getuName().equals("Admin") && 
-						player.getPassword().equals("Admin") &&
-						player.getStatus();
+						player.getPassword().equals("Admin");
 			}).findAny();
 				
 			if(admin.isPresent()) {
 					String ret = retrievePlayerStatuses(ipAddress);
 					serverLog(ret, ipAddress);
 					return ret;
-			} else {
-				retStatement = "Admin for this server is not signed-in";
 			}
 		}
 		
